@@ -1,0 +1,21 @@
+# Write your MySQL query statement below
+SELECT ip, COUNT(*) AS invalid_count
+FROM logs
+WHERE 
+
+    LENGTH(ip) - LENGTH(REPLACE(ip, '.', '')) <> 3
+    OR
+
+    EXISTS (
+        SELECT 1
+        FROM (
+            SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(ip, '.', n), '.', -1) AS octet
+            FROM (SELECT 1 AS n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4) t
+        ) parts
+        WHERE octet = '' 
+              OR octet REGEXP '^[0-9]+$' = 0   -- not numeric
+              OR (LENGTH(octet) > 1 AND octet LIKE '0%')  -- leading zeros
+              OR CAST(octet AS UNSIGNED) > 255  -- > 255
+    )
+GROUP BY ip
+ORDER BY invalid_count DESC, ip DESC;
