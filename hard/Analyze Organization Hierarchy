@@ -1,0 +1,52 @@
+-- Step 1: Compute hierarchy levels
+WITH RECURSIVE OrgLevels AS (
+    SELECT 
+        employee_id,
+        employee_name,
+        manager_id,
+        salary,
+        1 AS level
+    FROM Employees
+    WHERE manager_id IS NULL
+
+    UNION ALL
+
+    SELECT 
+        e.employee_id,
+        e.employee_name,
+        e.manager_id,
+        e.salary,
+        o.level + 1 AS level
+    FROM Employees e
+    JOIN OrgLevels o ON e.manager_id = o.employee_id
+),
+
+-- Step 2: Compute subordinates recursively
+Team AS (
+    SELECT 
+        employee_id AS manager_id,
+        employee_id AS subordinate_id,
+        salary AS subordinate_salary
+    FROM Employees
+
+    UNION ALL
+
+    SELECT 
+        t.manager_id,
+        e.employee_id,
+        e.salary
+    FROM Employees e
+    JOIN Team t ON e.manager_id = t.subordinate_id
+)
+
+-- Step 3: Aggregate team size and budget
+SELECT 
+    o.employee_id,
+    o.employee_name,
+    o.level,
+    COUNT(t.subordinate_id) - 1 AS team_size,  -- subtract self
+    SUM(t.subordinate_salary) AS budget
+FROM OrgLevels o
+JOIN Team t ON o.employee_id = t.manager_id
+GROUP BY o.employee_id, o.employee_name, o.level
+ORDER BY o.level ASC, budget DESC, o.employee_name ASC;
