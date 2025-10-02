@@ -1,0 +1,22 @@
+from collections import Counter
+from typing import List
+
+class Solution:
+    def numRabbits(self, answers: List[int]) -> int:
+        if not answers:
+            return 0
+
+        count = Counter(answers)
+        total = 0
+
+        for ans, freq in count.items():
+            group_size = ans + 1
+            # number of full groups needed to cover freq rabbits
+            groups = (freq + group_size - 1) // group_size
+            total += groups * group_size
+
+        return total
+
+# Example (for local testing)
+# print(Solution().numRabbits([1,1,2]))  # -> 5
+# print(Solution().numRabbits([10,10,10]))  # -> 11
